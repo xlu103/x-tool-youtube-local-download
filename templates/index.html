@@ -22,6 +22,30 @@
         .video-info {
             margin-top: 10px;
         }
+        
+        .video-url {
+            word-break: break-all;
+            color: #666;
+            font-size: 0.9em;
+            margin: 5px 0;
+        }
+        
+        .download-btn {
+            margin-top: 10px;
+        }
+        
+        .btn-redownload {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 4px;
+        }
+        
+        .btn-redownload:hover {
+            background-color: #218838;
+            color: white;
+        }
     </style>
 </head>
 
@@ -50,12 +74,23 @@
                 {% for video in downloads %}
                 <div class="download-item">
                     <h4>{{ video.title }}</h4>
+                    <div class="video-url">
+                        <strong>链接:</strong> <a href="{{ video.url }}" target="_blank">{{ video.url }}</a>
+                    </div>
                     <div class="video-info">
                         <p><strong>作者:</strong> {{ video.author }}</p>
                         <p><strong>时长:</strong> {{ video.duration_human }}</p>
                         <p><strong>文件大小:</strong> {{ video.filesize_human }}</p>
                         <p><strong>下载时间:</strong> {{ video.download_time }}</p>
                         <p><strong>状态:</strong> {{ video.status }}</p>
+                    </div>
+                    <div class="download-btn">
+                        <form action="/download" method="POST" style="display: inline;">
+                            <input type="hidden" name="url" value="{{ video.url }}">
+                            <button type="submit" class="btn btn-redownload">
+                                重新下载
+                            </button>
+                        </form>
                     </div>
                 </div>
                 {% endfor %} {% endif %}
