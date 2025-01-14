@@ -18,7 +18,7 @@ app.secret_key = 'your-secret-key-here'  # 在生产环境中使用更安全的�
 
 @app.before_request
 def before_request():
-    # 如果用户没有session_id，创建一个新的
+    # 如果用户没有session_id,创建一个新的
     if 'user_id' not in session:
         session['user_id'] = str(uuid.uuid4())
 
@@ -67,7 +67,7 @@ def download():
     }
 
     try:
-        # 先获取视频信息，不下载
+        # 先获取视频信息,不下载
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             filename = ydl.prepare_filename(info)
@@ -75,7 +75,7 @@ def download():
             
             # 检查文件是否已存在
             if os.path.exists(filename):
-                logger.info(f"文件已存在，直接返回: {filename}")
+                logger.info(f"文件已存在,直接返回: {filename}")
                 try:
                     return send_file(
                         filename,
@@ -86,7 +86,7 @@ def download():
                     logger.error(f"发送已存在文件时出错: {str(e)}")
                     raise
             
-            # 文件不存在，开始下载
+            # 文件不存在,开始下载
             logger.info("开始下载新文件")
             info = ydl.extract_info(url, download=True)
             
@@ -108,7 +108,7 @@ def download():
                 'thumbnail_path': ''
             }
             
-            # 保存下载记录，添加session_id
+            # 保存下载记录,添加session_id
             try:
                 add_download(video_info, session['user_id'])
                 logger.info("下载记录已保存到数据库")

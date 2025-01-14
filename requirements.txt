@@ -1,0 +1,40 @@
+# Web 框架
+Flask==3.0.0
+
+# YouTube 下载工具
+yt-dlp==2024.3.10
+
+# 数据库相关
+SQLAlchemy==2.0.27
+Flask-SQLAlchemy==3.1.1
+
+# 文件大小和时间格式化
+humanize==4.9.0
+
+# 日期时间处理
+python-dateutil==2.8.2
+
+# 文件处理
+python-magic==0.4.27
+
+# 异步任务处理(如果需要)
+celery==5.3.6
+redis==5.0.1
+
+# 环境变量管理
+python-dotenv==1.0.1
+
+# 安全相关
+Flask-Login==0.6.3
+Flask-WTF==1.2.1
+
+# 视频处理(可选)
+ffmpeg-python==0.2.0
+
+# 开发工具
+pytest==8.0.0
+black==24.1.1
+flake8==7.0.0
+
+# 生产环境
+gunicorn==21.2.0 
