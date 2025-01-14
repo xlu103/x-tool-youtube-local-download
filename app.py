@@ -1,9 +1,10 @@
-from flask import Flask, render_template, request, jsonify, send_file
+from flask import Flask, render_template, request, jsonify, send_file, session
 import yt_dlp
 import os
 from database import init_db, add_download, get_downloads
 import humanize
 import logging
+import uuid
 
 # 配置日志
 logging.basicConfig(level=logging.DEBUG)
@@ -11,11 +12,20 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'downloads'
+# 设置一个密钥用于加密session数据
+app.secret_key = 'your-secret-key-here'  # 在生产环境中使用更安全的密钥
+
+
+@app.before_request
+def before_request():
+    # 如果用户没有session_id，创建一个新的
+    if 'user_id' not in session:
+        session['user_id'] = str(uuid.uuid4())
 
 
 @app.route("/")
 def home():
-    downloads = get_downloads()
+    downloads = get_downloads(session['user_id'])
     for download in downloads:
         try:
             if download['file_size']:
@@ -98,24 +108,18 @@ def download():
                 'thumbnail_path': ''
             }
             
-            # 保存下载记录
+            # 保存下载记录，添加session_id
             try:
-                add_download(video_info)
+                add_download(video_info, session['user_id'])
                 logger.info("下载记录已保存到数据库")
             except Exception as e:
                 logger.error(f"保存下载记录时出错: {str(e)}")
-                # 继续执行，不影响文件下载
             
-            # 发送文件
-            try:
-                return send_file(
-                    filename,
-                    as_attachment=True,
-                    download_name=os.path.basename(filename)
-                )
-            except Exception as e:
-                logger.error(f"发送新下载文件时出错: {str(e)}")
-                raise
+            return send_file(
+                filename,
+                as_attachment=True,
+                download_name=os.path.basename(filename)
+            )
 
     except Exception as e:
         logger.error(f"下载过程中出错: {str(e)}")

@@ -15,19 +15,20 @@ def init_db():
          file_size INTEGER,
          local_path TEXT,
          thumbnail_path TEXT,
+         session_id TEXT NOT NULL,
          download_time TIMESTAMP NOT NULL)
     ''')
     conn.commit()
     conn.close()
 
-def add_download(video_info):
+def add_download(video_info, session_id):
     conn = sqlite3.connect('downloads.db')
     c = conn.cursor()
     c.execute('''
         INSERT INTO downloads 
         (title, url, author, duration, description, 
-         file_size, local_path, thumbnail_path, download_time)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+         file_size, local_path, thumbnail_path, session_id, download_time)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (
         video_info['title'],
         video_info['url'],
@@ -37,20 +38,22 @@ def add_download(video_info):
         video_info['file_size'],
         video_info['local_path'],
         video_info['thumbnail_path'],
+        session_id,
         datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     ))
     conn.commit()
     conn.close()
 
-def get_downloads():
+def get_downloads(session_id):
     conn = sqlite3.connect('downloads.db')
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     c.execute('''
         SELECT * FROM downloads 
+        WHERE session_id = ?
         ORDER BY download_time DESC
         LIMIT 10
-    ''')
+    ''', (session_id,))
     downloads = [dict(row) for row in c.fetchall()]
     conn.close()
     return downloads 
