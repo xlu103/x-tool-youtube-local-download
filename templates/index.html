@@ -103,47 +103,85 @@
     <script>
         document.querySelector('form').addEventListener('submit', function(e) {
             e.preventDefault();
-            
             const formData = new FormData(this);
+            const resultDiv = document.getElementById('download-result');
+            
+            // 显示等待消息
+            resultDiv.className = 'alert alert-info';
+            resultDiv.innerHTML = '开始下载，请稍候...';
+            resultDiv.style.display = 'block';
             
             fetch('/download', {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
-            .then(data => {
-                const resultDiv = document.getElementById('download-result');
-                
-                if (data.status === 'completed') {
-                    // 显示批量下载结果
-                    let message = `<h4>下载完成</h4>`;
-                    if (data.successful.length > 0) {
-                        message += `<p>成功下载 ${data.successful.length} 个视频</p>`;
+            .then(response => {
+                // 检查响应类型
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    // 这是播放列表的响应
+                    return response.json().then(data => ({data, isJson: true}));
+                } else {
+                    // 这是单个文件的响应
+                    return response.blob().then(blob => ({
+                        data: blob, 
+                        isJson: false,
+                        filename: response.headers.get('content-disposition')
+                            ?.split('filename=')[1]
+                            ?.replace(/"/g, '') || 'video.mp4'
+                    }));
+                }
+            })
+            .then(({data, isJson, filename}) => {
+                if (isJson) {
+                    // 处理播放列表下载结果
+                    if (data.status === 'completed') {
+                        let message = `<h4>下载完成</h4>`;
+                        if (data.successful.length > 0) {
+                            message += `<p>成功下载 ${data.successful.length} 个视频:</p>`;
+                            message += `<ul>`;
+                            data.successful.forEach(title => {
+                                message += `<li>${title}</li>`;
+                            });
+                            message += `</ul>`;
+                        }
+                        if (data.failed.length > 0) {
+                            message += `<p>失败 ${data.failed.length} 个视频:</p>`;
+                            message += `<details><summary>查看详情</summary><pre>${data.failed.join('\n')}</pre></details>`;
+                        }
+                        
+                        resultDiv.className = 'alert alert-success';
+                        resultDiv.innerHTML = message;
+                        
+                        // 3秒后刷新页面显示新的下载记录
+                        setTimeout(() => location.reload(), 3000);
+                    } else {
+                        resultDiv.className = 'alert alert-danger';
+                        resultDiv.innerHTML = data.message || '下载失败';
                     }
-                    if (data.failed.length > 0) {
-                        message += `<p>失败 ${data.failed.length} 个视频</p>`;
-                        message += `<details><summary>失败详情</summary><pre>${data.failed.join('\n')}</pre></details>`;
-                    }
+                } else {
+                    // 处理单个文件下载
+                    const url = window.URL.createObjectURL(data);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = filename;  // 使用传递过来的文件名
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
                     
-                    resultDiv.className = 'alert alert-info';
-                    resultDiv.innerHTML = message;
-                    resultDiv.style.display = 'block';
+                    resultDiv.className = 'alert alert-success';
+                    resultDiv.innerHTML = '下载成功！正在保存文件...';
                     
-                    // 刷新下载列表
-                    setTimeout(() => location.reload(), 3000);
-                } else if (data.status === 'error') {
-                    // 显示错误信息
-                    resultDiv.className = 'alert alert-danger';
-                    resultDiv.innerHTML = data.message;
-                    resultDiv.style.display = 'block';
+                    // 2秒后刷新页面显示新的下载记录
+                    setTimeout(() => location.reload(), 2000);
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                const resultDiv = document.getElementById('download-result');
                 resultDiv.className = 'alert alert-danger';
-                resultDiv.innerHTML = '下载请求失败';
-                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = '下载请求失败: ' + error.message;
             });
         });
     </script>
