@@ -69,6 +69,8 @@
                     </div>
                 </form>
 
+                <div id="download-result" class="alert" style="display: none;"></div>
+
                 {% if downloads %}
                 <h3 class="mb-4">下载记录</h3>
                 {% for video in downloads %}
@@ -97,6 +99,54 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.querySelector('form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            fetch('/download', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultDiv = document.getElementById('download-result');
+                
+                if (data.status === 'completed') {
+                    // 显示批量下载结果
+                    let message = `<h4>下载完成</h4>`;
+                    if (data.successful.length > 0) {
+                        message += `<p>成功下载 ${data.successful.length} 个视频</p>`;
+                    }
+                    if (data.failed.length > 0) {
+                        message += `<p>失败 ${data.failed.length} 个视频</p>`;
+                        message += `<details><summary>失败详情</summary><pre>${data.failed.join('\n')}</pre></details>`;
+                    }
+                    
+                    resultDiv.className = 'alert alert-info';
+                    resultDiv.innerHTML = message;
+                    resultDiv.style.display = 'block';
+                    
+                    // 刷新下载列表
+                    setTimeout(() => location.reload(), 3000);
+                } else if (data.status === 'error') {
+                    // 显示错误信息
+                    resultDiv.className = 'alert alert-danger';
+                    resultDiv.innerHTML = data.message;
+                    resultDiv.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const resultDiv = document.getElementById('download-result');
+                resultDiv.className = 'alert alert-danger';
+                resultDiv.innerHTML = '下载请求失败';
+                resultDiv.style.display = 'block';
+            });
+        });
+    </script>
 </body>
 
 </html>
